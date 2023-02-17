@@ -109,9 +109,6 @@ func lookupPostalCode(postalCode string) (*PostalCodeInfo, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, err
 	}
-
-	fmt.Println(response)
-
 	return response, nil
 }
 
@@ -122,5 +119,36 @@ func GetZoneFromPostalCode(ctx context.Context, postalCode string) (*PostalCodeI
 		Status:  info.Status,
 		Message: info.Message,
 		Zone:    info.Zone,
+	}, nil
+}
+
+type IPLocationInfo struct {
+	ZipCode string `json:"zip_code"`
+}
+
+func lookupIp(ip string) (*IPLocationInfo, error) {
+	URL := "https://api.ip2location.com/v2/?ip=" + ip + "&package=WS9&format=json&key=RF0AZKKB5I"
+	resp, err := http.Get(URL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	var response *IPLocationInfo
+
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+type Request struct {
+	Ip string `json:"ip"`
+}
+
+//encore:api public method=POST path=/ip
+func GetPostalCodeFromIP(ctx context.Context, req *Request) (*IPLocationInfo, error) {
+	info, _ := lookupIp(req.Ip)
+	return &IPLocationInfo{
+		ZipCode: info.ZipCode,
 	}, nil
 }
