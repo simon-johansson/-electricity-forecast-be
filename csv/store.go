@@ -4,7 +4,52 @@ import (
 	"context"
 	"encoding/json"
 	"encore.dev/storage/sqldb"
+	"errors"
 )
+
+var countryNameToIsoMap = map[string]string{
+	"MONTENEGRO":             "ME",
+	"NETHERLANDS":            "NL",
+	"CYPRUS":                 "CY",
+	"BELGIUM":                "BE",
+	"UNITED KINGDOM":         "GB",
+	"BELARUS":                "BY",
+	"GERMANY":                "DE",
+	"NORTH MACEDONIA":        "MK",
+	"POLAND":                 "PL",
+	"SLOVENIA":               "SI",
+	"FRANCE":                 "FR",
+	"ITALY":                  "IT",
+	"CROATIA":                "HR",
+	"HUNGARY":                "HU",
+	"IRELAND":                "IE",
+	"PORTUGAL":               "PT",
+	"SERBIA":                 "RS",
+	"RUSSIA":                 "RU",
+	"CZECH REPUBLIC":         "CZ",
+	"GREECE":                 "GR",
+	"MALTA":                  "MT",
+	"LUXEMBOURG":             "LU",
+	"SLOVAKIA":               "SK",
+	"LATVIA":                 "LV",
+	"ALBANIA":                "AL",
+	"ICELAND":                "IS",
+	"MOROCCO":                "MA",
+	"DENMARK":                "DK",
+	"FINLAND":                "FI",
+	"SPAIN":                  "ES",
+	"ROMANIA":                "RO",
+	"TURKEY":                 "TR",
+	"MOLDOVA":                "MD",
+	"BULGARIA":               "BG",
+	"SWITZERLAND":            "CH",
+	"ESTONIA":                "EE",
+	"LITHUANIA":              "LT",
+	"NORWAY":                 "NO",
+	"SWEDEN":                 "SE",
+	"AUSTRIA":                "AT",
+	"BOSNIA AND HERZEGOVINA": "BA",
+}
 
 func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 	tx, err := sqldb.Begin(ctx)
@@ -17,21 +62,7 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 		countryMap[row.Country] = append(countryMap[row.Country], row)
 	}
 
-	var countryNameList []string
-	for countryName := range countryMap {
-		countryNameList = append(countryNameList, countryName)
-	}
-	countryNameListJSON, _ := json.Marshal(countryNameList)
-	_, err = sqldb.Exec(
-		ctx,
-		`INSERT INTO "available_countries" (id, json) VALUES ($1, $2)
-					ON CONFLICT (id) DO UPDATE SET json=$2`,
-		"same_id_always", string(countryNameListJSON),
-	)
-	if err != nil {
-		sqldb.Rollback(tx)
-		return err
-	}
+	var countrySimpleList []*CountrySimple
 
 	for countryName, countryRows := range countryMap {
 
@@ -41,7 +72,10 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 		}
 
 		var regions []*Region
+		var regionNames []string
 		for regionName, regionRows := range regionMap {
+
+			regionNames = append(regionNames, regionName)
 
 			dayMap := map[string][]*CSVRow{}
 			for _, row := range regionRows {
@@ -70,8 +104,20 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 			})
 		}
 
+		isoCode, ok := countryNameToIsoMap[countryName]
+		if !ok {
+			return errors.New("Country " + countryName + " does not exist in map")
+		}
+
+		countrySimpleList = append(countrySimpleList, &CountrySimple{
+			Name:    countryName,
+			ISOCode: isoCode,
+			Regions: regionNames,
+		})
+
 		json, _ := json.Marshal(&Country{
 			Name:    countryName,
+			ISOCode: isoCode,
 			Regions: regions,
 		})
 
@@ -86,5 +132,18 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 			return err
 		}
 	}
+
+	countrySimpleListJSON, _ := json.Marshal(countrySimpleList)
+	_, err = sqldb.Exec(
+		ctx,
+		`INSERT INTO "available_countries" (id, json) VALUES ($1, $2)
+					ON CONFLICT (id) DO UPDATE SET json=$2`,
+		"same_id_always", string(countrySimpleListJSON),
+	)
+	if err != nil {
+		sqldb.Rollback(tx)
+		return err
+	}
+
 	return nil
 }

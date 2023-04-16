@@ -32,7 +32,14 @@ type Region struct {
 
 type Country struct {
 	Name    string    `json:"name"`
+	ISOCode string    `json:"isoCode"`
 	Regions []*Region `json:"regions"`
+}
+
+type CountrySimple struct {
+	Name    string   `json:"name"`
+	ISOCode string   `json:"isoCode"`
+	Regions []string `json:"regions"`
 }
 
 var DROPBOX_URL = "https://dropbox.com/sh/0qkvdyeychvde9o/AACw-J_gPfhpPF6kFMcFjK-xa?dl=1"
@@ -117,7 +124,7 @@ type StoredCountryList struct {
 }
 
 type GetCountryListResponse struct {
-	Data []string `json:"data"`
+	Data *[]CountrySimple `json:"data"`
 }
 
 //encore:api public method=GET path=/country
@@ -132,13 +139,13 @@ func GetCountryList(ctx context.Context) (*GetCountryListResponse, error) {
 		return nil, err
 	}
 
-	var countryList []string
-	if err = json.Unmarshal([]byte(stored.JSON), &countryList); err != nil {
+	var countrySimpleList *[]CountrySimple
+	if err = json.Unmarshal([]byte(stored.JSON), &countrySimpleList); err != nil {
 		captureError(err)
 		return nil, err
 	}
 
-	return &GetCountryListResponse{Data: countryList}, nil
+	return &GetCountryListResponse{Data: countrySimpleList}, nil
 }
 
 func sendToSlack(ctx context.Context, message string) {
