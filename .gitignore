@@ -3,4 +3,4 @@ encore.gen.go
 encore.gen.cue
 
 file.zip
- /data/*.csv
+EVIEW_Price.csv
