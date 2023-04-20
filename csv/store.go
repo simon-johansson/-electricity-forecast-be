@@ -51,6 +51,15 @@ var countryNameToIsoMap = map[string]string{
 	"BOSNIA AND HERZEGOVINA": "BA",
 }
 
+func containsValidData(rows []*CSVRow) bool {
+	for _, row := range rows {
+		if row.Valid != "0" {
+			return true
+		}
+	}
+	return false
+}
+
 func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 	tx, err := sqldb.Begin(ctx)
 	if err != nil {
@@ -65,6 +74,10 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 	var countrySimpleList []*CountrySimple
 
 	for countryName, countryRows := range countryMap {
+		hasValidData := containsValidData(countryRows)
+		if !hasValidData {
+			continue
+		}
 
 		regionMap := map[string][]*CSVRow{}
 		for _, row := range countryRows {
@@ -74,7 +87,11 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 		var regions []*Region
 		var regionNames []string
 		for regionName, regionRows := range regionMap {
-
+			hasValidData = containsValidData(regionRows)
+			if !hasValidData {
+				println(countryName, regionName)
+				continue
+			}
 			regionNames = append(regionNames, regionName)
 
 			dayMap := map[string][]*CSVRow{}

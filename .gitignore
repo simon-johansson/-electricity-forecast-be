@@ -2,5 +2,5 @@
 encore.gen.go
 encore.gen.cue
 
- *.zip
- /data
+file.zip
+ /data/*.csv
