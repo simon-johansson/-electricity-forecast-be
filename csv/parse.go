@@ -2,7 +2,7 @@ package csv
 
 import (
 	"encoding/csv"
-	"fmt"
+	"encore.dev/rlog"
 	"github.com/gocarina/gocsv"
 	"io"
 	"os"
@@ -24,19 +24,21 @@ func parseCSVFile(filePath string) ([]*CSVRow, error) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(clientsFile.Name())
 	defer clientsFile.Close()
 
 	clients := []*CSVRow{}
 
 	gocsv.SetCSVReader(func(in io.Reader) gocsv.CSVReader {
 		r := csv.NewReader(in)
-		r.FieldsPerRecord = -1
+		//r.FieldsPerRecord = -1
+		r.Comma = ';'
 		return r
 	})
 
-	if err := gocsv.UnmarshalFile(clientsFile, &clients); err != nil {
+	if err = gocsv.UnmarshalFile(clientsFile, &clients); err != nil {
+		rlog.Error("Failed to unmarshal file", err)
 		return nil, err
 	}
+
 	return clients, nil
 }

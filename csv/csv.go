@@ -58,30 +58,36 @@ func SaveCsv(ctx context.Context) error {
 	pwd, err := os.Getwd()
 	if err != nil {
 		captureError(err)
+		rlog.Error("Failed to get path", err)
 		return err
 	}
 
-	err = downloadFromURL(DROPBOX_URL, ZIP_FILE_NAME)
-	if err != nil {
+	if err = downloadFromURL(DROPBOX_URL, ZIP_FILE_NAME); err != nil {
 		captureError(err)
+		rlog.Error("Failed to download file", err)
 		return err
 	}
+	rlog.Info("Successfully downloaded zip file")
 
-	err = unzipFile(ZIP_FILE_NAME, filepath.Join(pwd, ZIP_FOLDER))
-	if err != nil {
+	if err = unzipFile(ZIP_FILE_NAME, filepath.Join(pwd, ZIP_FOLDER)); err != nil {
 		captureError(err)
+		rlog.Error("Failed to unzip file", err)
 		return err
 	}
+	rlog.Info("Successfully unzipped file")
 
 	csvRows, err := parseCSVFile(filepath.Join(ZIP_FOLDER, CSV_FILE_NAME))
 	if err != nil {
 		captureError(err)
+		rlog.Error("Failed to parse csv", err)
 		return err
 	}
+	rlog.Info("Successfully parsed CSV", "Rows in CSV", len(csvRows))
 
 	err = storeCountryData(ctx, csvRows)
 	if err != nil {
 		captureError(err)
+		rlog.Error("Failed to store data", err)
 		return err
 	}
 
