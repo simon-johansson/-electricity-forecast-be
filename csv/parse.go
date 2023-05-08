@@ -16,7 +16,7 @@ type CSVRow struct {
 	Hour    string `csv:"TIMMA"`
 	Offset  string `csv:"OFFSET"`
 	Valid   string `csv:"GILTLIG"`
-	Price   string `csv:"PRIS"`
+	Price   string `csv:"EUR/MWh"`
 }
 
 func parseCSVFile(filePath string) ([]*CSVRow, error) {
@@ -30,8 +30,8 @@ func parseCSVFile(filePath string) ([]*CSVRow, error) {
 
 	gocsv.SetCSVReader(func(in io.Reader) gocsv.CSVReader {
 		r := csv.NewReader(in)
-		//r.FieldsPerRecord = -1
-		r.Comma = ';'
+		r.FieldsPerRecord = -1
+		r.Comma = ','
 		return r
 	})
 
