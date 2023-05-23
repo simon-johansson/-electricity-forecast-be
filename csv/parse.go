@@ -9,14 +9,18 @@ import (
 )
 
 type CSVRow struct {
-	Time    string `csv:"CALCTIME"`
-	Country string `csv:"COUNTRY"`
-	Region  string `csv:"REGION"`
-	Day     string `csv:"DAG"`
-	Hour    string `csv:"TIMMA"`
-	Offset  string `csv:"OFFSET"`
-	Valid   string `csv:"GILTLIG"`
-	Price   string `csv:"EUR/MWh"`
+	Time       string `csv:"CALCTIME"`
+	Country    string `csv:"COUNTRY"`
+	Region     string `csv:"REGION"`
+	Day        string `csv:"DAG"`
+	LocalDay   string `csv:"LOCT-Dag"`
+	Hour       string `csv:"TIMMA"`
+	LocalHour  string `csv:"LOCT-tim"`
+	Offset     string `csv:"OFFSET"`
+	Valid      string `csv:"GILTLIG"`
+	Price      string `csv:"EUR/MWh"`
+	LocalPrice string `csv:"LOC/kWh"`
+	Currency   string `csv:"Valuta"`
 }
 
 func parseCSVFile(filePath string) ([]*CSVRow, error) {

@@ -14,10 +14,12 @@ import (
 )
 
 type Time struct {
-	Hour   string `json:"hour"`
-	Offset string `json:"offset"`
-	Price  string `json:"price"`
-	Valid  string `json:"valid"`
+	Hour       string `json:"hour"`
+	LocalHour  string `json:"localHour"`
+	Offset     string `json:"offset"`
+	Price      string `json:"price"`
+	LocalPrice string `json:"localPrice"`
+	Valid      string `json:"valid"`
 }
 
 type Day struct {
@@ -26,8 +28,9 @@ type Day struct {
 }
 
 type Region struct {
-	Name string `json:"name"`
-	Days []*Day `json:"days"`
+	Name     string `json:"name"`
+	Currency string `json:"currency"`
+	Days     []*Day `json:"days"`
 }
 
 type Country struct {

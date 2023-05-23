@@ -96,28 +96,35 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 
 			dayMap := map[string][]*CSVRow{}
 			for _, row := range regionRows {
-				dayMap[row.Day] = append(dayMap[row.Day], row)
+				dayMap[row.LocalDay] = append(dayMap[row.LocalDay], row)
 			}
 
 			var days []*Day
 			for dayKey, csvRows := range dayMap {
 				var times []*Time
-				for _, csvRow := range csvRows {
-					times = append(times, &Time{
-						Hour:   csvRow.Hour,
-						Offset: csvRow.Offset,
-						Price:  csvRow.Price,
-						Valid:  csvRow.Valid,
+
+				// Skip days that have fewer than 10 hours
+				if len(csvRows) > 10 {
+					for _, csvRow := range csvRows {
+						times = append(times, &Time{
+							Hour:       csvRow.Hour,
+							LocalHour:  csvRow.LocalHour,
+							Offset:     csvRow.Offset,
+							Price:      csvRow.Price,
+							LocalPrice: csvRow.LocalPrice,
+							Valid:      csvRow.Valid,
+						})
+					}
+					days = append(days, &Day{
+						Time: times,
+						Date: dayKey,
 					})
 				}
-				days = append(days, &Day{
-					Time: times,
-					Date: dayKey,
-				})
 			}
 			regions = append(regions, &Region{
-				Name: regionName,
-				Days: days,
+				Name:     regionName,
+				Currency: regionRows[0].Currency,
+				Days:     days,
 			})
 		}
 
