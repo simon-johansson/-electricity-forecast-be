@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encore.dev/storage/sqldb"
 	"errors"
+	"time"
 )
 
 var countryNameToIsoMap = map[string]string{
@@ -49,6 +50,7 @@ var countryNameToIsoMap = map[string]string{
 	"SWEDEN":                 "SE",
 	"AUSTRIA":                "AT",
 	"BOSNIA AND HERZEGOVINA": "BA",
+	"KOSOVO":                 "XK",
 }
 
 func containsValidData(rows []*CSVRow) bool {
@@ -65,6 +67,8 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 	if err != nil {
 		return err
 	}
+
+	timezone, _ := time.LoadLocation("Europe/Stockholm")
 
 	countryMap := map[string][]*CSVRow{}
 	for _, row := range csvRows {
@@ -121,10 +125,22 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 					})
 				}
 			}
+			var daysAfterToday []*Day
+			for _, day := range days {
+				// Format the date to be able to parse it
+				dateFormatted := day.Date[0:4] + "-" + day.Date[4:6] + "-" + day.Date[len(day.Date)-2:]
+				date, _ := time.Parse("2006-01-02", dateFormatted)
+				// If the date is after today in the given timezone, add it to the list
+				now := time.Now().In(timezone)
+				isToday := now.Year() == date.Year() && now.Month() == date.Month() && now.Day() == date.Day()
+				if (isToday || date.After(now)) && len(daysAfterToday) <= 7 {
+					daysAfterToday = append(daysAfterToday, day)
+				}
+			}
 			regions = append(regions, &Region{
 				Name:     regionName,
 				Currency: regionRows[0].Currency,
-				Days:     days,
+				Days:     daysAfterToday,
 			})
 		}
 
