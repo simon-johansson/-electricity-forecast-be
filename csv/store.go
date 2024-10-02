@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encore.dev/storage/sqldb"
 	"errors"
+	"sort"
 	"time"
 )
 
@@ -126,6 +127,9 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 				}
 			}
 			var daysAfterToday []*Day
+			sort.SliceStable(days, func(i, j int) bool {
+				return days[i].Date < days[j].Date
+			})
 			for _, day := range days {
 				// Format the date to be able to parse it
 				dateFormatted := day.Date[0:4] + "-" + day.Date[4:6] + "-" + day.Date[len(day.Date)-2:]
@@ -133,7 +137,7 @@ func storeCountryData(ctx context.Context, csvRows []*CSVRow) error {
 				// If the date is after today in the given timezone, add it to the list
 				now := time.Now().In(timezone)
 				isToday := now.Year() == date.Year() && now.Month() == date.Month() && now.Day() == date.Day()
-				if (isToday || date.After(now)) && len(daysAfterToday) <= 7 {
+				if (isToday || date.After(now)) && len(daysAfterToday) < 7 {
 					daysAfterToday = append(daysAfterToday, day)
 				}
 			}
